@@ -1,0 +1,35 @@
+root = "/Users/al/123/repos/"
+command = "npm run build"
+
+[logger]
+log_level = "Info"
+
+[aws]
+role_script_path="/Users/al/123/script/sso.zsh"
+role="conform5-edetek-dev-01.conform5-batch-dev"
+
+[repos]
+workers = [
+  'conform5-bpo-api',
+  'conform5-bxp-api',
+  # 'conform5-dvw-api',
+  # 'conform5-lambda-batch-audit',
+  # 'conform5-lambda-batch-data-validation-worker',
+  # 'conform5-lambda-batch-define-xml-validator',
+  # 'conform5-lambda-batch-issue-load-worker',
+  # 'conform5-lambda-batch-issues-report-generator',
+  # 'conform5-lambda-batch-load-worker',
+  # 'conform5-lambda-batch-parsing-worker',
+  # 'conform5-lambda-batch-sdtm-validation',
+  # 'conform5-lambda-batch-standard-merger',
+  # 'conform5-lambda-batch-transformation-worker',
+  # 'conform5-cb-rule-templates',
+
+  # one time scripts
+  # 'conform5-batch-rule-name-population',
+  # 'conform5-batch-initiator-user-id-population'
+
+  # python repos
+  # 'conform5-lambda-batch-vr-python-custom-code',
+  # 'conform5-lambda-batch-mt-python-custom-code',
+]
