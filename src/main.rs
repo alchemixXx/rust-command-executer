@@ -27,13 +27,15 @@ fn main() -> CustomResult<()> {
     let mut result_string = String::new();
     result_string.push('\n');
 
-    // logger.debug("Logging in to AWS...");
-    // login(
-    //     &config.git.branch,
-    //     &config.aws.role_script_path,
-    //     &config.aws.role,
-    // );
-    // logger.debug("Logged in to AWS");
+    if config.aws.login_required {
+        logger.debug("Logging in to AWS...");
+        login(
+            &config.git.branch,
+            &config.aws.role_script_path,
+            &config.aws.role,
+        );
+        logger.debug("Logged in to AWS");
+    }
 
     let executer = Executer::new(&config.root, &repos, &config.command);
 
