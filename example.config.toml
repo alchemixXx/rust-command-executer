@@ -4,17 +4,6 @@ command = "npm run build"
 [logger]
 log_level = "Info"
 
-[git]
-# branch = "dev-59"
-branch = "dev-591"
-# branch = "dev-510-batch"
-# branch = "next"
-
-[aws]
-role_script_path="/Users/alchemist/EDETEK/script/sso.zsh"
-role="conform5-edetek-dev-01.conform5-batch-dev"
-login_required=false
-
 [repos]
 workers = [
   'conform5-bpo-api',

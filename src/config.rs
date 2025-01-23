@@ -10,26 +10,12 @@ pub struct WorkersConfig {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct GitConfig {
-    pub branch: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct AwsConfig {
-    pub role_script_path: String,
-    pub role: String,
-    pub login_required: bool,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct LoggerConfig {
     pub log_level: LogLevel,
 }
 // Top level struct to hold the TOML data.
 #[derive(Debug, Deserialize)]
 pub struct Data {
-    pub git: GitConfig,
-    pub aws: AwsConfig,
     pub root: String,
     pub command: String,
     pub repos: WorkersConfig,

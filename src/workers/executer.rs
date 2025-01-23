@@ -88,7 +88,7 @@ impl<'repo> Executer<'repo> {
             Ok(output) => output,
             Err(e) => {
                 logger.error(format!("Failed to execute command: {}", e).as_str());
-                return Err(CustomError::CommandExecution);
+                return Err(CustomError::CommandExecution(e.to_string()));
             }
         };
 
@@ -96,7 +96,9 @@ impl<'repo> Executer<'repo> {
             logger.error(format!("Failed to execute command for repo: {}", path).as_str());
             logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
 
-            return Err(CustomError::CommandExecution);
+            return Err(CustomError::CommandExecution(
+                String::from_utf8_lossy(&output.stderr).to_string(),
+            ));
         }
 
         logger.info(format!("Executed command: {}", self.command).as_str());

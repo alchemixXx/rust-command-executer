@@ -1,8 +1,9 @@
 pub type CustomResult<T> = core::result::Result<T, CustomError>;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum CustomError {
-    CommandExecution,
+    CommandExecution(String),
     PathBuildException,
 }
 
