@@ -20,6 +20,7 @@ pub struct Data {
     pub command: String,
     pub repos: WorkersConfig,
     pub logger: LoggerConfig,
+    pub parallel: bool,
 }
 
 impl WorkersConfig {

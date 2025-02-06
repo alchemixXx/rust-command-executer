@@ -1,5 +1,6 @@
 root = "/Users/al/123/repos/"
 command = "npm run build"
+parallel = true
 
 [logger]
 log_level = "Info"

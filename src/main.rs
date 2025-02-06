@@ -9,8 +9,10 @@ mod workers;
 use crate::logger::Logger;
 use cli::CLi;
 use workers::executer::Executer;
+use workers::parallel_executer::ParallelExecuter;
 
-fn main() -> CustomResult<()> {
+#[tokio::main]
+async fn main() -> CustomResult<()> {
     println!("Reading cli args...");
     let cli_args = CLi::parse();
     println!("CLI args: {:#?}", cli_args);
@@ -23,14 +25,29 @@ fn main() -> CustomResult<()> {
     let repos = config.repos.get_repos_list();
     logger.info(format!("Repos to execute: {:#?}", repos).as_str());
 
-    let mut result_string = String::new();
-    result_string.push('\n');
+    let start = std::time::Instant::now();
 
-    let executer = Executer::new(&config.root, &repos, &config.command);
+    println!("Executer started at: {:?}", std::time::Instant::now());
 
-    let result = executer.execute()?;
+    let result: workers::structs::ExecutionResult = if config.parallel {
+        let executer = ParallelExecuter::new(&config.root, &repos, &config.command);
+
+        executer.execute().await?
+    } else {
+        let executer = Executer::new(&config.root, &repos, &config.command);
+
+        executer.execute().await?
+    };
+
+    let end = std::time::Instant::now();
+
+    println!(
+        "Executer finished. Total time: {:?}",
+        end.duration_since(start)
+    );
 
     logger.warn(format!("Failed repos: {:#?}", result.failed).as_str());
+    logger.warn(format!("Technical errors: {:#?}", result.technical).as_str());
     logger.warn(format!("Successes repos: {:#?}", result.succeed).as_str());
     logger.info("Command executer finished!");
 

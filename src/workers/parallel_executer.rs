@@ -2,36 +2,41 @@ use crate::{
     custom_error::{CustomError, CustomResult},
     logger::{Logger, LoggerTrait},
 };
+use futures::stream::{FuturesUnordered, StreamExt};
 use std::path::Path;
 use std::{
     collections::{HashMap, HashSet},
     process::{Command, Output},
 };
+use tokio::task;
 
 use super::structs::ExecutionResult;
 
-pub struct Executer<'config> {
+pub struct ParallelExecuter<'config> {
     root: &'config String,
     command: &'config String,
     repos: &'config Vec<String>,
 }
 
-impl<'config> LoggerTrait for Executer<'config> {}
+impl<'config> LoggerTrait for ParallelExecuter<'config> {}
 
-impl<'config> Executer<'config> {
+impl<'config> ParallelExecuter<'config> {
     pub fn new(
         root: &'config String,
         repos: &'config Vec<String>,
         command: &'config String,
     ) -> Self {
-        Executer {
+        ParallelExecuter {
             root,
             repos,
             command,
         }
     }
 
-    fn execute_for_repo(path: &'config String, command: &'config String) -> CustomResult<Output> {
+    async fn execute_for_repo<'repo>(
+        path: &'repo String,
+        command: &'repo String,
+    ) -> CustomResult<Output> {
         let logger = Logger::new();
         logger.info(format!("Executing command: {}", command).as_str());
 
@@ -65,11 +70,13 @@ impl<'config> Executer<'config> {
     }
 }
 
-impl<'repo> Executer<'repo> {
+impl<'repo> ParallelExecuter<'repo> {
     pub async fn execute(&self) -> CustomResult<ExecutionResult> {
         let logger = self.get_logger();
         let mut failed_repos_hash: HashMap<String, String> = HashMap::new();
         let mut success_repos_set: HashSet<String> = HashSet::new();
+        let mut tech_errors_set: HashSet<String> = HashSet::new();
+        let mut tasks = FuturesUnordered::new();
 
         for repo in self.repos.iter() {
             let repo_path = Path::new(self.root)
@@ -79,29 +86,37 @@ impl<'repo> Executer<'repo> {
                 .to_string();
 
             logger.debug(format!("Executing command: {}", repo_path).as_str());
+            let command = self.command.clone();
+            let repo = repo.clone();
 
-            let output = Executer::execute_for_repo(&repo_path, self.command);
+            tasks.push(task::spawn(async move {
+                (
+                    repo,
+                    ParallelExecuter::execute_for_repo(&repo_path, &command).await,
+                )
+            }));
+        }
 
-            match output {
-                Ok(_) => {
-                    logger.debug(
-                        format!("Command executed successfully in repo: {}", repo_path).as_str(),
-                    );
-                    success_repos_set.insert(repo.to_string());
-                }
+        while let Some(result) = tasks.next().await {
+            match result {
                 Err(e) => {
-                    logger.error(format!("Error: {}", e).as_str());
-                    failed_repos_hash.insert(repo.clone(), e.to_string());
+                    tech_errors_set.insert(e.to_string());
                 }
+                Ok((repo, execution_result)) => match execution_result {
+                    Err(execution_error) => {
+                        failed_repos_hash.insert(repo, execution_error.to_string());
+                    }
+                    Ok(_) => {
+                        success_repos_set.insert(repo);
+                    }
+                },
             }
-
-            logger.debug(format!("Executed command in repo: {}", repo_path).as_str());
         }
 
         Ok(ExecutionResult {
             failed: failed_repos_hash,
             succeed: success_repos_set,
-            technical: HashSet::new(),
+            technical: tech_errors_set,
         })
     }
 }
